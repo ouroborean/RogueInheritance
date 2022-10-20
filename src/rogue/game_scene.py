@@ -3,6 +3,7 @@ from shikkoku.engine import Scene
 from shikkoku.color import *
 import sdl2.ext
 
+from rogue.tilemap import TileMap
 from rogue.cc_scene import CCScene
 
 FONTNAME = "Basic-Regular.ttf"
@@ -31,22 +32,32 @@ class GameScene(Scene):
             sdl2.SDLK_DOWN: self.release_down
         }
         self.title_font = self.app.init_font(24, FONTNAME)
-        self.background_region = self.region.subregion(0, 0, 1200, 800)
-
-
+        self.game_region = self.region.subregion(5, 5, 912, 609)
+        
+        self.grid_tile = self.app.load("grid.png")
 
         
         
     def full_render(self):
-        self.get_created_character()
-        self.render_background_region()
-
-    def render_background_region(self):
-
-        background_panel = self.make_panel(BLACK, self.background_region.size())
-        background_panel = self.render_bordered_text(self.title_font, str(self.character_class), BLACK, WHITE, background_panel, 0, 0, 1)
-        self.background_region.add_sprite(background_panel, 0, 0)
+        background = self.make_panel(BLACK, (1200, 800))
+        self.region.add_sprite(background, 0, 0)
         
+        self.render_game_region()
+        self.get_created_character()
+    
+    def render_game_region(self):
+        self.game_region.clear()
+        background = self.make_panel(SILVER, self.game_region.size())
+        self.game_region.add_sprite(background, 0, 0)
+        
+        WIDTH_IN_TILES = 9
+        
+        for i in range(54):
+            row = i // WIDTH_IN_TILES
+            column = i % WIDTH_IN_TILES
+            grid = self.make_sprite(self.grid_tile)
+            self.game_region.add_sprite(grid, 1 + column * 101, 1 + row * 101)
+    
     def get_created_character(self):
         self.character_class = self.app.scenes["cc"].send_chosen_class()
 

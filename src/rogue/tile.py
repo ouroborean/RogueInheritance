@@ -15,6 +15,7 @@ class Tile():
     loc: Tuple[int, int]
     types: set[TileType]
     neighbor: dict[Direction, "Tile"]
+    actor: 
     
     def __init__(self):
         self.types = set()
@@ -43,5 +44,3 @@ class VoidTile(Tile):
         self.types.add(TileType.OPAQUE)
         self.types.add(TileType.SOLID)
         self.types.add(TileType.INVIOLABLE)
-        
-        
