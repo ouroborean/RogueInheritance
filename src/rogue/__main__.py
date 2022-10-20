@@ -4,6 +4,7 @@ from shikkoku.sample_scene import SampleScene
 from rogue.cc_scene import CCScene
 
 from rogue.menu_scene import MenuScene
+from rogue.game_scene import GameScene
 
 FONTNAME = "Basic-Regular.ttf"
 
@@ -16,6 +17,7 @@ def main():
         scene = MenuScene(app, "main")
         app.add_scene(scene)
         app.add_scene(CCScene(app, "cc"))
+        app.add_scene(GameScene(app, "game"))
         app.start_game_loop(scene)
     
 main()
