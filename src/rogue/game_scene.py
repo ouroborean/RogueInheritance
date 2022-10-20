@@ -3,6 +3,7 @@ from shikkoku.engine import Scene
 from shikkoku.color import *
 import sdl2.ext
 
+from rogue.tile import FloorTile, TileType
 from rogue.tilemap import TileMap
 from rogue.cc_scene import CCScene
 
@@ -35,7 +36,39 @@ class GameScene(Scene):
         self.game_region = self.region.subregion(5, 5, 912, 609)
         
         self.grid_tile = self.app.load("grid.png")
-
+        self.tile_map = TileMap((9, 6))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 1))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 2))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 3))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 4))
+        
         
         
     def full_render(self):
@@ -57,6 +90,9 @@ class GameScene(Scene):
             column = i % WIDTH_IN_TILES
             grid = self.make_sprite(self.grid_tile)
             self.game_region.add_sprite(grid, 1 + column * 101, 1 + row * 101)
+            tile = self.tile_map.get_tile((column, row))
+            tile_sprite = self.make_sprite(self.app.load(tile.image))
+            self.game_region.add_sprite(tile_sprite, 2 + column * 101, 2 + row * 101)
     
     def get_created_character(self):
         self.character_class = self.app.scenes["cc"].send_chosen_class()
