@@ -1,6 +1,10 @@
 from rogue.direction import Direction, counter_direction
 from typing import Tuple
 import enum
+import typing
+
+if typing.TYPE_CHECKING:
+    from rogue.actor import Actor
 
 @enum.unique
 class TileType(enum.IntEnum):
@@ -15,7 +19,7 @@ class Tile():
     loc: Tuple[int, int]
     types: set[TileType]
     neighbor: dict[Direction, "Tile"]
-    actor: 
+    actor: "Actor"
     
     def __init__(self):
         self.types = set()
@@ -44,3 +48,12 @@ class VoidTile(Tile):
         self.types.add(TileType.OPAQUE)
         self.types.add(TileType.SOLID)
         self.types.add(TileType.INVIOLABLE)
+        
+        
+class FloorTile(Tile):
+    
+    def __init__(self, image, tile_types):
+        self.image = image
+        for tile_type in tile_types:
+            self.types.add(tile_type)
+        
