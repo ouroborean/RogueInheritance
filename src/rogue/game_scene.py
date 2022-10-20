@@ -33,10 +33,10 @@ class GameScene(Scene):
             sdl2.SDLK_DOWN: self.release_down
         }
         self.title_font = self.app.init_font(24, FONTNAME)
-        self.game_region = self.region.subregion(5, 5, 912, 609)
+        self.game_region = self.region.subregion(5, 5, 913, 588)
         
         self.grid_tile = self.app.load("grid.png")
-        self.tile_map = TileMap((9, 6))
+        self.tile_map = TileMap((14, 9))
         self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 1))
         self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 1))
         self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 1))
@@ -69,6 +69,12 @@ class GameScene(Scene):
         self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 4))
         self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 4))
         
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (8, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (9, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 4))
         
         
     def full_render(self):
@@ -83,16 +89,18 @@ class GameScene(Scene):
         background = self.make_panel(SILVER, self.game_region.size())
         self.game_region.add_sprite(background, 0, 0)
         
-        WIDTH_IN_TILES = 9
+        WIDTH_IN_TILES = self.tile_map.width
         
-        for i in range(54):
+        all_tiles = self.tile_map.width * self.tile_map.height
+        
+        for i in range(all_tiles):
             row = i // WIDTH_IN_TILES
             column = i % WIDTH_IN_TILES
             grid = self.make_sprite(self.grid_tile)
-            self.game_region.add_sprite(grid, 1 + column * 101, 1 + row * 101)
+            self.game_region.add_sprite(grid, 1 + column * 65, 1 + row * 65)
             tile = self.tile_map.get_tile((column, row))
-            tile_sprite = self.make_sprite(self.app.load(tile.image))
-            self.game_region.add_sprite(tile_sprite, 2 + column * 101, 2 + row * 101)
+            tile_sprite = self.make_sprite(self.app.load(tile.image, width=64, height=64))
+            self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
     
     def get_created_character(self):
         self.character_class = self.app.scenes["cc"].send_chosen_class()
