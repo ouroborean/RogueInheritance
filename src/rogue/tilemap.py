@@ -17,7 +17,6 @@ class TileMap():
         for i, tile in enumerate(self.tiles):
             self.add_tile(VoidTile(), i)
         
-           
     def valid_coord(self, coord) -> bool:
         return (coord[0] + (coord[1] * self.width)) >= 0 and (coord[0] + (coord[1] * self.width)) < (self.width*self.height) and coord[0] < self.width and coord[1] < self.height
     
@@ -43,14 +42,12 @@ class TileMap():
                     tile.set_neighbor(offset_direction((offset1, offset2)), self.get_tile((offset_x, offset_y)))
                     neighbors += 1
                     
-        
         self.tiles[num_loc] = tile
         
     def get_tile(self, coord: Tuple[int, int]) -> Tile:
         if self.valid_coord(coord):
             return self.tiles[coord[0] + (coord[1] * self.width)]
         
-    
     def num_to_coord(self, num: int) -> Tuple[int, int]:
         return (num % self.width, num // self.width)
     

@@ -4,6 +4,8 @@ from shikkoku.color import *
 import sdl2.ext
 import rogue.statpool
 from rogue.statpool import Stat
+from rogue.tile import FloorTile, TileType
+from rogue.tilemap import TileMap
 from rogue.cc_scene import CCScene
 
 FONTNAME = "Basic-Regular.ttf"
@@ -32,26 +34,73 @@ class GameScene(Scene):
             sdl2.SDLK_DOWN: self.release_down
         }
         self.title_font = self.app.init_font(24, FONTNAME)
-        self.background_region = self.region.subregion(0, 0, 1200, 800)
-
-
-
+        self.game_region = self.region.subregion(5, 5, 913, 588)
+        
+        self.grid_tile = self.app.load("grid.png")
+        self.tile_map = TileMap((14, 9))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 1))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 2))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 3))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 4))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 4))
+        
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (8, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (9, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 1))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 2))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 3))
+        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 4))
         
         
     def full_render(self):
+        background = self.make_panel(BLACK, (1200, 800))
+        self.region.add_sprite(background, 0, 0)
+        self.render_game_region()
         self.get_created_character()
-        self.render_background_region()
-        print(str(self.player.name))
-        print("Level " + str(self.player.level) + " " + str(self.player.character_class))
-        print("HP: " + str(self.player.current_health) + "/" + str(self.player.max_health))
-        print("STR: " + str(self.player.statpool.stats[Stat.STRENGTH]))
-        print("DEX: " + str(self.player.statpool.stats[Stat.DEXTERITY]))
-        print("CON: " + str(self.player.statpool.stats[Stat.CONSTITUTION]))
-
-    def render_background_region(self):
-        background_panel = self.make_panel(BLACK, self.background_region.size())
-        self.background_region.add_sprite(background_panel, 0, 0)
+    
+    def render_game_region(self):
+        self.game_region.clear()
+        background = self.make_panel(SILVER, self.game_region.size())
+        self.game_region.add_sprite(background, 0, 0)
+        WIDTH_IN_TILES = self.tile_map.width
         
+        all_tiles = self.tile_map.width * self.tile_map.height
+        
+        for i in range(all_tiles):
+            row = i // WIDTH_IN_TILES
+            column = i % WIDTH_IN_TILES
+            grid = self.make_sprite(self.grid_tile)
+            self.game_region.add_sprite(grid, 1 + column * 65, 1 + row * 65)
+            tile = self.tile_map.get_tile((column, row))
+            tile_sprite = self.make_sprite(self.app.load(tile.image, width=64, height=64))
+            self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
+    
     def get_created_character(self):
         self.player = self.app.scenes["cc"].create_player()
 
