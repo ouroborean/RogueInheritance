@@ -14,6 +14,7 @@ class MenuScene(Scene):
         self.event_handlers = {
             sdl2.SDL_KEYDOWN: self.handle_key_down_event,
             sdl2.SDL_KEYUP: self.handle_key_up_event
+            
         }
         
         self.key_down_event_handlers = {

@@ -17,11 +17,19 @@ class TileType(enum.IntEnum):
     SOLID = 2
     INVIOLABLE = 3
 
+@enum.unique
+class TileEntity(enum.IntEnum):
+    ENEMY = 0
+    TERRAIN = 1
+    ALLY = 2
+    EMPTY = 3
+
 class Tile():
     
     loc: Tuple[int, int]
     types: set[TileType]
     neighbor: dict[Direction, "Tile"]
+    entity: dict[TileEntity, function()]
     actor: "Actor"
     game_objects: list["GameObject"]
     scenery: "Scenery"
@@ -37,6 +45,9 @@ class Tile():
             Direction.NORTHEAST: None,
             Direction.NORTHWEST: None,
             Direction.SOUTHWEST: None
+        }
+        self.entity = {
+            
         }
         self.actor = None
         self.game_objects = list()

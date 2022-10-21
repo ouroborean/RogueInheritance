@@ -2,7 +2,8 @@ import string
 from shikkoku.engine import Scene
 from shikkoku.color import *
 import sdl2.ext
-
+import rogue.statpool
+from rogue.statpool import Stat
 from rogue.tile import FloorTile, TileType
 from rogue.tilemap import TileMap
 from rogue.cc_scene import CCScene
@@ -80,7 +81,6 @@ class GameScene(Scene):
     def full_render(self):
         background = self.make_panel(BLACK, (1200, 800))
         self.region.add_sprite(background, 0, 0)
-        
         self.render_game_region()
         self.get_created_character()
     
@@ -88,7 +88,6 @@ class GameScene(Scene):
         self.game_region.clear()
         background = self.make_panel(SILVER, self.game_region.size())
         self.game_region.add_sprite(background, 0, 0)
-        
         WIDTH_IN_TILES = self.tile_map.width
         
         all_tiles = self.tile_map.width * self.tile_map.height
@@ -103,7 +102,7 @@ class GameScene(Scene):
             self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
     
     def get_created_character(self):
-        self.character_class = self.app.scenes["cc"].send_chosen_class()
+        self.player = self.app.scenes["cc"].create_player()
 
     def press_right(self, event):
         pass
