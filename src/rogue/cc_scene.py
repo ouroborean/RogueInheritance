@@ -4,8 +4,9 @@ import sdl2.ext
 import sdl2
 import importlib.resources
 import typing
+import rogue.player
 from PIL import Image
-
+from rogue.statpool import StatPool, Stat
 FONTNAME = "Basic-Regular.ttf"
 
 
@@ -17,6 +18,7 @@ class CCScene(Scene):
     
     def __init__(self, app, name):
         super().__init__(app, name)
+        self.player = rogue.player.Player()
         self.event_handlers = {
             sdl2.SDL_KEYDOWN: self.handle_key_down_event,
             sdl2.SDL_KEYUP: self.handle_key_up_event,
@@ -55,33 +57,39 @@ class CCScene(Scene):
         self.strength_up = self.make_panel_button(BLACK, (20, 20))
         self.strength_up = self.border_sprite(self.strength_up, WHITE, 1)
         self.strength_up = self.render_bordered_text(self.title_font, "+", WHITE, WHITE, self.strength_up, 1, -8, 1)
-        self.strength_up.pressed += self.str_up
+        self.strength_up.pressed += self.stat_up
         self.strength_up.indent = 0
+        self.strength_up.stat = 0
         self.strength_down = self.make_panel_button(BLACK, (20, 20))
         self.strength_down = self.border_sprite(self.strength_down, WHITE, 1)
         self.strength_down = self.render_bordered_text(self.title_font, "-", WHITE, WHITE, self.strength_down, 4, -8, 1)
-        self.strength_down.pressed += self.str_down
+        self.strength_down.pressed += self.stat_down
         self.strength_down.indent = 0
+        self.strength_down.stat = 0
         self.dexterity_up = self.make_panel_button(BLACK, (20, 20))
         self.dexterity_up = self.border_sprite(self.dexterity_up, WHITE, 1)
         self.dexterity_up = self.render_bordered_text(self.title_font, "+", WHITE, WHITE, self.dexterity_up, 1, -8, 1)
-        self.dexterity_up.pressed += self.dex_up
+        self.dexterity_up.pressed += self.stat_up
         self.dexterity_up.indent = 0
+        self.dexterity_up.stat = 1
         self.dexterity_down = self.make_panel_button(BLACK, (20, 20))
         self.dexterity_down = self.border_sprite(self.dexterity_down, WHITE, 1)
         self.dexterity_down = self.render_bordered_text(self.title_font, "-", WHITE, WHITE, self.dexterity_down, 4, -8, 1)
-        self.dexterity_down.pressed += self.dex_down
+        self.dexterity_down.pressed += self.stat_down
         self.dexterity_down.indent = 0
+        self.dexterity_down.stat = 1
         self.constitution_up = self.make_panel_button(BLACK, (20, 20))
         self.constitution_up = self.border_sprite(self.constitution_up, WHITE, 1)
         self.constitution_up = self.render_bordered_text(self.title_font, "+", WHITE, WHITE, self.constitution_up, 1, -8, 1)
-        self.constitution_up.pressed += self.con_up
+        self.constitution_up.pressed += self.stat_up
         self.constitution_up.indent = 0
+        self.constitution_up.stat = 2
         self.constitution_down = self.make_panel_button(BLACK, (20, 20))
         self.constitution_down = self.border_sprite(self.constitution_down, WHITE, 1)
         self.constitution_down = self.render_bordered_text(self.title_font, "-", WHITE, WHITE, self.constitution_down, 4, -8, 1)
-        self.constitution_down.pressed += self.con_down
+        self.constitution_down.pressed += self.stat_down
         self.constitution_down.indent = 0
+        self.constitution_down.stat = 2
         #endregion
         #region Stat Button Regions
         self.dex_up_region = self.region.subregion(208, 317, 20, 22)
@@ -98,7 +106,10 @@ class CCScene(Scene):
         self.dexterity = 10
         self.constitution = 10
         self.stat_points = 5
-        dexterity = 10
+        self.player_name = ""
+        self.player_level = 1
+        self.player_max_health = 10
+        self.player_current_health = 10
         
 
 
@@ -142,6 +153,12 @@ class CCScene(Scene):
         
     def start_game_click(self, button, event):
         self.app.change_scene("game")
+
+    def create_player(self):
+        self.player.character_class = self.send_chosen_class()
+        self.player.max_health = self.player_max_health + (3 * (self.player.statpool.stats[Stat.CONSTITUTION] - 10))
+        self.player.current_health = self.player.max_health
+        return self.player
 
     def render_background_region(self):
         self.background_region.clear()
@@ -193,7 +210,6 @@ class CCScene(Scene):
             self.warrior_button_region.add_sprite(warrior_image, 0, 13)
             print("Warrior was selected!")
         else:
-
             warrior_panel = self.make_panel_button(BLACK, self.warrior_button_region.size())
             warrior_panel = self.render_bordered_text(self.title_font, "Warrior", RED, WHITE, warrior_panel, 85, 25, 1)
             warrior_panel.click += self.warrior_select
@@ -210,6 +226,7 @@ class CCScene(Scene):
             return "Rogue"
         elif self.c_selected == True:
             return "Cleric"
+
 
 
 
@@ -274,11 +291,11 @@ class CCScene(Scene):
 
     def render_stat_panel(self):
         stat_panel = self.make_panel(BLACK, (150, 400))
-        stat_panel = self.render_bordered_text(self.title_font, str(self.strength), BLACK, WHITE, stat_panel, 60, 30, 1)
+        stat_panel = self.render_bordered_text(self.title_font, str(self.player.statpool.stats[Stat.STRENGTH]), BLACK, WHITE, stat_panel, 60, 30, 1)
         stat_panel = self.render_bordered_text(self.title_font, "Strength", BLACK, WHITE, stat_panel, 28, 0, 1)
-        stat_panel = self.render_bordered_text(self.title_font, str(self.dexterity), BLACK, WHITE, stat_panel, 60, 90, 1)
+        stat_panel = self.render_bordered_text(self.title_font, str(self.player.statpool.stats[Stat.DEXTERITY]), BLACK, WHITE, stat_panel, 60, 90, 1)
         stat_panel = self.render_bordered_text(self.title_font, "Dexterity", BLACK, WHITE, stat_panel, 25, 60, 1)
-        stat_panel = self.render_bordered_text(self.title_font, str(self.constitution), BLACK, WHITE, stat_panel, 60, 150, 1)
+        stat_panel = self.render_bordered_text(self.title_font, str(self.player.statpool.stats[Stat.CONSTITUTION]), BLACK, WHITE, stat_panel, 60, 150, 1)
         stat_panel = self.render_bordered_text(self.title_font, "Constitution", BLACK, WHITE, stat_panel, 10, 120, 1)
         stat_panel = self.render_bordered_text(self.smaller_font, "Points Remaining", BLACK, WHITE, stat_panel, 15, 240, 1)
         stat_panel = self.render_bordered_text(self.title_font, str(self.stat_points), BLACK, WHITE, stat_panel, 65, 270, 1)
@@ -365,10 +382,10 @@ class CCScene(Scene):
         button.indent = 1
         self.render_stat_region()
 
-    def str_up(self, button, event):
+    def stat_up(self, button, event):
         button.indent = 1
         if self.stat_points > 0:
-            self.strength += 1
+            self.player.statpool.stats[Stat(button.stat)] += 1
             self.stat_points -= 1
         self.render_stat_region()
 
@@ -386,10 +403,10 @@ class CCScene(Scene):
             self.stat_points -= 1
         self.render_stat_region()    
 
-    def str_down(self, button, event):
+    def stat_down(self, button, event):
         button.indent = 1
-        if self.strength > 10:
-            self.strength -= 1
+        if self.player.statpool.stats[Stat(button.stat)] > 10:
+            self.player.statpool.stats[Stat(button.stat)] -= 1
             self.stat_points += 1
         self.render_stat_region()       
 

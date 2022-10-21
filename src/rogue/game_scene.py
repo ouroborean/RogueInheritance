@@ -2,7 +2,8 @@ import string
 from shikkoku.engine import Scene
 from shikkoku.color import *
 import sdl2.ext
-
+import rogue.statpool
+from rogue.statpool import Stat
 from rogue.cc_scene import CCScene
 
 FONTNAME = "Basic-Regular.ttf"
@@ -40,15 +41,19 @@ class GameScene(Scene):
     def full_render(self):
         self.get_created_character()
         self.render_background_region()
+        print(str(self.player.name))
+        print("Level " + str(self.player.level) + " " + str(self.player.character_class))
+        print("HP: " + str(self.player.current_health) + "/" + str(self.player.max_health))
+        print("STR: " + str(self.player.statpool.stats[Stat.STRENGTH]))
+        print("DEX: " + str(self.player.statpool.stats[Stat.DEXTERITY]))
+        print("CON: " + str(self.player.statpool.stats[Stat.CONSTITUTION]))
 
     def render_background_region(self):
-
         background_panel = self.make_panel(BLACK, self.background_region.size())
-        background_panel = self.render_bordered_text(self.title_font, str(self.character_class), BLACK, WHITE, background_panel, 0, 0, 1)
         self.background_region.add_sprite(background_panel, 0, 0)
         
     def get_created_character(self):
-        self.character_class = self.app.scenes["cc"].send_chosen_class()
+        self.player = self.app.scenes["cc"].create_player()
 
     def press_right(self, event):
         pass
