@@ -34,7 +34,7 @@ class GameScene(Scene):
             sdl2.SDLK_LEFT: self.press_left,
             sdl2.SDLK_UP: self.press_up,
             sdl2.SDLK_DOWN: self.press_down,
-            
+            sdl2.SDLK_SPACE: self.press_space
         }
         
         self.key_up_event_handlers = {
@@ -52,7 +52,6 @@ class GameScene(Scene):
         self.tile_map = self.area.gen_tilemap((14, 9))
         
         self.dest = None
-        self.enemy_loc = (1, 1)
         self.path = list()        
         
     def full_render(self):
@@ -78,6 +77,9 @@ class GameScene(Scene):
             tile_sprite.tile = tile
             tile_sprite.motion += self.move_over_tile
             self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
+            if tile.scenery:
+                scenery_sprite = self.make_sprite(self.app.load(tile.scenery.image, width=64, height=64))
+                self.game_region.add_sprite(scenery_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
             if tile.actor:
                 if tile.actor.is_new == True:
                     self.targets.append(tile.actor)
@@ -92,18 +94,10 @@ class GameScene(Scene):
                     self.game_region.add_sprite(actor_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
                     tile.actor.loc = tile.loc
                     tile.entity = TileEntity.ENEMY
-            if tile.scenery:
-                scenery_sprite = self.make_sprite(self.app.load(tile.scenery.image, width=64, height=64))
-                self.game_region.add_sprite(scenery_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
-            # self.targets.clear()
-            # if tile.actor:
-            #     actor_sprite = self.make_sprite(self.app.load(tile.actor.image, width = 64, height = 64))
-            #     self.game_region.add_sprite(actor_sprite, 2 + tile.actor.loc[0] * 65, 2 + tile.actor.loc[1] * 65)
-            #     self.targets.append(tile.actor)
-            #     tile.actor.loc = tile.loc
-            #     tile.entity = TileEntity.ENEMY
-            
-
+            if tile in self.path:
+                path_panel = self.make_panel(PURPLE, (64, 64))
+                self.game_region.add_sprite(path_panel, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
+        
         self.tile_map.get_tile(self.player.loc).entity = TileEntity.PLAYER
         self.tile_map.get_tile(self.player.loc).actor = self.player
           
@@ -112,6 +106,7 @@ class GameScene(Scene):
 
     def get_created_character(self):
         self.player = self.app.scenes["cc"].create_player()
+        self.player.set_game_scene(self)
 
     def press_z(self, event):
         self.player.player_stand(self.tile_map.get_tile(self.player.loc))
@@ -129,8 +124,11 @@ class GameScene(Scene):
     def move_over_tile(self, button, sender):
         if self.hovered_tile != button.tile:
             self.hovered_tile = button.tile
-            self.path = self.tile_map.get_shortest_path(self.tile_map.get_tile((self.enemy_loc)), self.hovered_tile)[1:]
+            self.get_path_to_mouse()
             self.full_render()
+    
+    def get_path_to_mouse(self):
+        self.path = self.tile_map.get_shortest_path(self.tile_map.get_tile(self.player.loc), self.hovered_tile)[1:]
     
     def press_left(self, event):
         twople = self.player + direction_to_pos[Direction.WEST]
@@ -158,7 +156,10 @@ class GameScene(Scene):
         self.player.check_player_bump(self.tile_map.get_tile(twople))
         self.full_render()
         print(self.tile_map.get_tile(self.player.loc).entity)        
-        
+    
+    def press_space(self, event):
+        pass
+    
     def release_right(self, event):
 
         pass

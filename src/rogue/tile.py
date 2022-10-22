@@ -8,8 +8,6 @@ if typing.TYPE_CHECKING:
     from rogue.actor import Actor
     from rogue.game_object import GameObject
     
-    
-
 @enum.unique
 class TileType(enum.IntEnum):
     WALKABLE = 0
@@ -64,7 +62,7 @@ class Tile():
 
     def set_g_cost(self, cost):
         self.g_cost = cost
-        
+
     def set_h_cost(self, tile):
         self.h_cost = self.distance_to_tile(tile)
     
@@ -85,7 +83,6 @@ class Tile():
         self.loc = location
 
     def check_actor(self):
-
         pass
         
     def add_game_object(self, obj):
