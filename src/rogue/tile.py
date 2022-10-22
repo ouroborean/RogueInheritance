@@ -93,6 +93,7 @@ class Tile():
     
     def apply_scenery(self, scenery):
         self.scenery = scenery
+        self.entity = TileEntity.TERRAIN
         
     def add_actor(self, actor):
         self.actor = actor

@@ -12,37 +12,7 @@ logging.getLogger("PIL").setLevel(69) # turn off PIL logging
 def test_app():
     app = App("Test App", (50, 50))
     yield app
-    
-def test_shortest_path_g_cost_sort(test_app):
-    
-    tile_map = TileMap((10, 10))
-    
-    test_tiles = [tile_map.get_tile((0, i)) for i in range(10)]
-    
-    for i, tile in enumerate(test_tiles):
-        tile.g_cost = 10 - i
-    
-    test_tiles.sort(key=lambda x: x.g_cost)
-    
-    assert test_tiles[0].g_cost == 1
-    assert test_tiles[-1].g_cost == 10
-    
-def test_shortest_path_two_cost_sort(test_app):
-    tile_map = TileMap((10, 10))
-    test_tiles = [tile_map.get_tile((0, i)) for i in range(10)]
-    
-    for i, tile in enumerate(test_tiles):
-        tile.h_cost = 10 - i
-        tile.g_cost = random.randint(0, 3)
-    
-    test_tiles.sort(key= lambda x: (x.f_cost, x.g_cost))
-    
-    for i, tile in enumerate(test_tiles):
-        if i < len(test_tiles) - 1:
-            assert tile.f_cost <= test_tiles[i + 1].f_cost
-            if tile.f_cost == test_tiles[i + 1].f_cost:
-                assert tile.g_cost <= test_tiles[i + 1].g_cost
-
+  
 def test_shortest_path_execution(test_app):
     tile_map = TileMap((10, 10))
     

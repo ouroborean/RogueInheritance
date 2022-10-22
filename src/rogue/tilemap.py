@@ -108,10 +108,12 @@ class TileMap():
     def add_terrain(self, scenery, clutter_seed):
         for i in range(self.width * self.height):
             if not self.is_border_tile(i):
+                print("Rolling for random terrain")
                 roll = random.randint(1, 100)
                 if roll <= clutter_seed:
                     roll = random.randint(1, 100)
                     for weight, details in scenery.items():
+                        print("Rolling for WHICH random terrain!")
                         if roll <= weight:
                             self.get_tile(self.num_to_coord(i)).apply_scenery(Scenery(*details))
                             break
