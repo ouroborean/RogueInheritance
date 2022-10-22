@@ -7,6 +7,12 @@ from rogue.tile import Tile, TileEntity
 from rogue.tilemap import TileMap
 import random
 from rogue.direction import direction_to_pos
+
+import typing
+
+if typing.TYPE_CHECKING:
+    from rogue.game_scene import GameScene
+
 class PlayerDamage(enum.IntEnum):
     MAX = 0
     MIN = 1
@@ -37,6 +43,7 @@ class Player(Actor):
         self.speed = 1
         self.image = ""
         self.defence = 15
+        self.game_scene = None
         self.damage = {
             PlayerDamage.MAX : 5,
             PlayerDamage.MIN : 3
@@ -62,6 +69,8 @@ class Player(Actor):
         self.turn_counter += self.speed     
         print(self.turn_counter)
         
+    def set_game_scene(self, scene: "GameScene"):
+        self.game_scene = scene
     
     def player_swap(self):
         pass

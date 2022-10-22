@@ -81,7 +81,7 @@ class GameScene(Scene):
             if tile.actor:
                 if tile.actor.is_new == True:
                     self.targets.append(tile.actor)
-                    tile.actor.is_new == False
+                    tile.actor.is_new = False
                 if tile.actor.dead:
                     print("To do: Handle Loot")
                     self.targets.remove(tile.actor)
@@ -92,7 +92,9 @@ class GameScene(Scene):
                     self.game_region.add_sprite(actor_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
                     tile.actor.loc = tile.loc
                     tile.entity = TileEntity.ENEMY
-            
+            if tile.scenery:
+                scenery_sprite = self.make_sprite(self.app.load(tile.scenery.image, width=64, height=64))
+                self.game_region.add_sprite(scenery_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
             # self.targets.clear()
             # if tile.actor:
             #     actor_sprite = self.make_sprite(self.app.load(tile.actor.image, width = 64, height = 64))
