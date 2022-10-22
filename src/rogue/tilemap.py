@@ -1,6 +1,7 @@
-from rogue.tile import Tile, VoidTile, TileType
+from rogue.tile import Tile, VoidTile, TileType, FloorTile
 from rogue.direction import Direction, offset_direction
-
+from rogue.scenery import Scenery
+import random
 from typing import Tuple
 
 class TileMap():
@@ -13,9 +14,9 @@ class TileMap():
     def __init__(self, dimensions: Tuple[int, int]):
         self.width, self.height = dimensions
         self.tiles = [None] * (self.width * self.height)
-        
-        for i, tile in enumerate(self.tiles):
-            self.add_tile(VoidTile(), i)
+    
+    def is_border_tile(self, i) -> bool:
+        return i % self.width == 0 or i % self.width == self.width - 1 or i // self.width == 0 or i // self.width == self.height - 1
         
     def valid_coord(self, coord) -> bool:
         return (coord[0] + (coord[1] * self.width)) >= 0 and (coord[0] + (coord[1] * self.width)) < (self.width*self.height) and coord[0] < self.width and coord[1] < self.height and coord[0] >= 0 and coord[1] >= 0
@@ -65,7 +66,7 @@ class TileMap():
             if current == end:
                 break
             for direction, node in current.neighbor.items():
-                if node and TileType.WALKABLE in node.types:
+                if node and node.walkable:
                     if node in closed_nodes:
                         continue
                     if direction in ROOK_TILES:
@@ -83,7 +84,39 @@ class TileMap():
             output.append(output[-1].parent)
         output.reverse()
         return output
+    
+    def carpet_tile_map(self, tiles):
+        for i in range(self.width * self.height):
+            roll = random.randint(1, 100)
+            for weight, details in tiles.items():
+                if roll <= weight:
+                    self.add_tile(FloorTile(*details), self.num_to_coord(i))
+                    break
+                else:
+                    roll -= weight
+        
+    def border_tile_map(self, args):
+        for i in range(self.width * self.height):
+            if i % self.width == 0 or i % self.width == self.width - 1 or i // self.width == 0 or i // self.width == self.height - 1:
+                self.get_tile(self.num_to_coord(i)).apply_scenery(Scenery(*args))
                 
+    def void_border(self):
+        for i in range(self.width * self.height):
+            if i % self.width == 0 or i % self.width == self.width - 1 or i // self.width == 0 or i // self.width == self.height - 1:
+                self.add_tile(VoidTile(), self.num_to_coord(i))
+    
+    def add_terrain(self, scenery, clutter_seed):
+        for i in range(self.width * self.height):
+            if not self.is_border_tile(i):
+                roll = random.randint(1, 100)
+                if roll <= clutter_seed:
+                    roll = random.randint(1, 100)
+                    for weight, details in scenery.items():
+                        if roll <= weight:
+                            self.get_tile(self.num_to_coord(i)).apply_scenery(Scenery(*details))
+                            break
+                        else:
+                            roll -= weight
     
     def num_to_coord(self, num: int) -> Tuple[int, int]:
         return (num % self.width, num // self.width)

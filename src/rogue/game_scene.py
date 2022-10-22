@@ -6,12 +6,13 @@ from shikkoku.color import *
 import sdl2.ext
 import rogue.statpool
 from rogue.statpool import Stat
-from rogue.tile import FloorTile, Tile, TileType, TileEntity
+from rogue.tile import FloorTile, Tile, TileType, TileEntity, VoidTile
 from rogue.tilemap import TileMap
 from rogue.cc_scene import CCScene
 from rogue.npc import NPC
 from rogue.player import Player
 from rogue.direction import direction_to_pos, Direction
+from rogue.area import area_db
 
 FONTNAME = "Basic-Regular.ttf"
 
@@ -44,53 +45,18 @@ class GameScene(Scene):
         }
         self.title_font = self.app.init_font(24, FONTNAME)
         self.game_region = self.region.subregion(5, 5, 913, 588)
-        
+        self.hovered_tile = None
         self.grid_tile = self.app.load("grid.png")
-        self.tile_map = TileMap((14, 9))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 1))
         
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 2))
+        self.area = area_db["test"]
+        self.tile_map = self.area.gen_tilemap((14, 9))
         
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 3))
-        
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (1, 4))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (2, 4))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (3, 4))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (4, 4))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (5, 4))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (6, 4))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (7, 4))
-        
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (8, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (9, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 1))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 2))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 3))
-        self.tile_map.add_tile(FloorTile("grasstile.png", [TileType.WALKABLE,]), (10, 4))
-
-        self.tile_map.get_tile((6, 4)).add_actor(NPC())
-        self.tile_map.get_tile((6, 4)).entity = TileEntity.ENEMY
-        
+        self.dest = None
+        self.enemy_loc = (1, 1)
+        self.path = list()        
         
     def full_render(self):
+        self.region.clear()
         background = self.make_panel(BLACK, (1200, 800))
         self.region.add_sprite(background, 0, 0)
         self.render_game_region()
@@ -108,7 +74,9 @@ class GameScene(Scene):
             grid = self.make_sprite(self.grid_tile)
             self.game_region.add_sprite(grid, 1 + column * 65, 1 + row * 65)
             tile = self.tile_map.get_tile((column, row))
-            tile_sprite = self.make_sprite(self.app.load(tile.image, width=64, height=64))
+            tile_sprite = self.make_button(self.image_to_surf(self.app.load(tile.image, width=64, height=64)))
+            tile_sprite.tile = tile
+            tile_sprite.motion += self.move_over_tile
             self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
             if tile.actor:
                 if tile.actor.is_new == True:
@@ -140,7 +108,6 @@ class GameScene(Scene):
         character_sprite = self.make_sprite(self.app.load(self.player.image, width=64, height=64))
         self.game_region.add_sprite(character_sprite, 2 + self.player.loc[0] * 65, 2 + self.player.loc[1] * 65)
 
-    
     def get_created_character(self):
         self.player = self.app.scenes["cc"].create_player()
 
@@ -156,6 +123,12 @@ class GameScene(Scene):
         self.player.check_player_bump(self.tile_map.get_tile(twople))
         self.full_render()
         print(self.tile_map.get_tile(self.player.loc).entity)
+    
+    def move_over_tile(self, button, sender):
+        if self.hovered_tile != button.tile:
+            self.hovered_tile = button.tile
+            self.path = self.tile_map.get_shortest_path(self.tile_map.get_tile((self.enemy_loc)), self.hovered_tile)[1:]
+            self.full_render()
     
     def press_left(self, event):
         twople = self.player + direction_to_pos[Direction.WEST]

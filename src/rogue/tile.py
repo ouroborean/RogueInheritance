@@ -1,4 +1,5 @@
 from rogue.direction import Direction, counter_direction
+from rogue.scenery import Scenery, SceneryType
 from typing import Tuple, Callable
 import enum
 import typing
@@ -6,7 +7,7 @@ import typing
 if typing.TYPE_CHECKING:
     from rogue.actor import Actor
     from rogue.game_object import GameObject
-    from rogue.scenery import Scenery
+    
     
 
 @enum.unique
@@ -64,7 +65,6 @@ class Tile():
     def set_g_cost(self, cost):
         self.g_cost = cost
         
-
     def set_h_cost(self, tile):
         self.h_cost = self.distance_to_tile(tile)
     
@@ -72,6 +72,10 @@ class Tile():
         x_diff = abs(self.loc[0] - tile.loc[0])
         y_diff = abs(self.loc[1] - tile.loc[1])
         return (min(x_diff, y_diff) * 14) + (abs(x_diff - y_diff) * 10)
+
+    @property
+    def walkable(self) -> bool:
+        return TileType.WALKABLE in self.types and (not self.scenery or SceneryType.WALKABLE in self.scenery.types) and not self.entity == TileEntity.ENEMY
     
     @property
     def f_cost(self) -> int:
@@ -110,10 +114,10 @@ class VoidTile(Tile):
         
 class FloorTile(Tile):
     
-    def __init__(self, image, tile_types = list()):
+    def __init__(self, image, tile_types = set()):
         super().__init__()
         self.image = image
-        self.types = set()
+        self.types = tile_types
         self.types.add(TileType.WALKABLE)
         for tile_type in tile_types:
             self.types.add(tile_type)
