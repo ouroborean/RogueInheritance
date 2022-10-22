@@ -158,7 +158,17 @@ class GameScene(Scene):
         print(self.tile_map.get_tile(self.player.loc).entity)        
     
     def press_space(self, event):
-        pass
+        if self.path:
+            home_tile = self.tile_map.get_tile(self.player.loc)
+            home_tile.actor = None
+            home_tile.entity = 3
+            direction_tuple = (0, 0)
+            for direction, tile in home_tile.neighbor.items():
+                if self.path[0] == tile:
+                    direction_tuple = direction_to_pos[direction]
+            twople = self.player + direction_tuple
+            self.player.check_player_bump(self.tile_map.get_tile(twople))
+            self.full_render()
     
     def release_right(self, event):
 
