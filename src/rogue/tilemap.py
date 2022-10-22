@@ -1,4 +1,4 @@
-from rogue.tile import Tile, VoidTile
+from rogue.tile import Tile, VoidTile, TileType
 from rogue.direction import Direction, offset_direction
 
 from typing import Tuple
@@ -33,12 +33,14 @@ class TileMap():
         y = (-1, 0, 1)
         
         tile.set_loc(true_loc)
+        
         neighbors = 0
         for offset1 in x:
             offset_x = true_loc[0] + offset1
             for offset2 in y:
                 offset_y = true_loc[1] + offset2
                 if not (offset1, offset2) == (0, 0) and self.get_tile((offset_x, offset_y)):
+                    
                     tile.set_neighbor(offset_direction((offset1, offset2)), self.get_tile((offset_x, offset_y)))
                     neighbors += 1
                     
@@ -47,10 +49,42 @@ class TileMap():
     def get_tile(self, coord: Tuple[int, int]) -> Tile:
         if self.valid_coord(coord):
             return self.tiles[coord[0] + (coord[1] * self.width)]
-        else:
-            print(f"{coord} is not a valid tile")
-            return None
-        
+
+    def get_shortest_path(self, start, end) -> list[Tile]:
+        open_nodes = list()
+        closed_nodes = set()
+        open_nodes.append(start)  
+        ROOK_TILES = (Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST)
+        BISHOP_TILES = (Direction.NORTHEAST, Direction.NORTHWEST, Direction.SOUTHEAST, Direction.SOUTHWEST)
+        while True:
+            open_nodes.sort(key= lambda x: (x.f_cost, x.h_cost))
+            if not open_nodes:
+                return []
+            current = open_nodes.pop(0)
+            closed_nodes.add(current)
+            if current == end:
+                break
+            for direction, node in current.neighbor.items():
+                if node and TileType.WALKABLE in node.types:
+                    if node in closed_nodes:
+                        continue
+                    if direction in ROOK_TILES:
+                        path_length = 10
+                    elif direction in BISHOP_TILES:
+                        path_length = 14
+                    if current.g_cost + path_length < node.g_cost or not node in open_nodes:
+                        node.set_g_cost(current.g_cost + path_length)
+                        node.set_h_cost(end)
+                        node.parent = current
+                        if not node in open_nodes:
+                            open_nodes.append(node)
+        output = [end]
+        while not start in output:
+            output.append(output[-1].parent)
+        output.reverse()
+        return output
+                
+    
     def num_to_coord(self, num: int) -> Tuple[int, int]:
         return (num % self.width, num // self.width)
     
