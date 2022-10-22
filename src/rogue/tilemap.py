@@ -18,7 +18,7 @@ class TileMap():
             self.add_tile(VoidTile(), i)
         
     def valid_coord(self, coord) -> bool:
-        return (coord[0] + (coord[1] * self.width)) >= 0 and (coord[0] + (coord[1] * self.width)) < (self.width*self.height) and coord[0] < self.width and coord[1] < self.height
+        return (coord[0] + (coord[1] * self.width)) >= 0 and (coord[0] + (coord[1] * self.width)) < (self.width*self.height) and coord[0] < self.width and coord[1] < self.height and coord[0] >= 0 and coord[1] >= 0
     
     def add_tile(self, tile:Tile, location:Tuple):
         
@@ -47,6 +47,9 @@ class TileMap():
     def get_tile(self, coord: Tuple[int, int]) -> Tile:
         if self.valid_coord(coord):
             return self.tiles[coord[0] + (coord[1] * self.width)]
+        else:
+            print(f"{coord} is not a valid tile")
+            return None
         
     def num_to_coord(self, num: int) -> Tuple[int, int]:
         return (num % self.width, num // self.width)

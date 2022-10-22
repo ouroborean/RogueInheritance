@@ -109,7 +109,8 @@ class CCScene(Scene):
         self.player_name = ""
         self.player_level = 1
         self.player_max_health = 10
-        self.player_current_health = 10
+
+
         
 
 
@@ -152,9 +153,11 @@ class CCScene(Scene):
         self.app.change_scene("main")
         
     def start_game_click(self, button, event):
+        self.app.scenes["game"].get_created_character()
         self.app.change_scene("game")
 
     def create_player(self):
+        self.player.image = self.send_chosen_class().lower() + "player.png"
         self.player.character_class = self.send_chosen_class()
         self.player.max_health = self.player_max_health + (3 * (self.player.statpool.stats[Stat.CONSTITUTION] - 10))
         self.player.current_health = self.player.max_health

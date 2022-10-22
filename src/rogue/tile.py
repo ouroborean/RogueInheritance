@@ -1,5 +1,5 @@
 from rogue.direction import Direction, counter_direction
-from typing import Tuple
+from typing import Tuple, Callable
 import enum
 import typing
 
@@ -23,18 +23,21 @@ class TileEntity(enum.IntEnum):
     TERRAIN = 1
     ALLY = 2
     EMPTY = 3
+    PLAYER = 4
 
 class Tile():
     
     loc: Tuple[int, int]
     types: set[TileType]
     neighbor: dict[Direction, "Tile"]
-    entity: dict[TileEntity, function()]
+    entity: TileEntity
     actor: "Actor"
     game_objects: list["GameObject"]
     scenery: "Scenery"
+
     
     def __init__(self):
+        self.actor_added = False
         self.types = set()
         self.neighbor = {
             Direction.NORTH: None,
@@ -46,15 +49,21 @@ class Tile():
             Direction.NORTHWEST: None,
             Direction.SOUTHWEST: None
         }
-        self.entity = {
-            
-        }
+        self.entity = TileEntity.EMPTY
+        self.player = None
         self.actor = None
         self.game_objects = list()
         self.scenery = None
+
+    def get_entity_state(self):
+        return self.entity
     
     def set_loc(self, location):
         self.loc = location
+
+    def check_actor(self):
+
+        pass
         
     def add_game_object(self, obj):
         self.game_objects.append(obj)
@@ -77,6 +86,7 @@ class VoidTile(Tile):
         self.types.add(TileType.OPAQUE)
         self.types.add(TileType.SOLID)
         self.types.add(TileType.INVIOLABLE)
+        self.entity = TileEntity.TERRAIN
         
         
 class FloorTile(Tile):
