@@ -81,6 +81,7 @@ class Player(Actor):
         self.loc = self + diff
         tile.entity = TileEntity.PLAYER
         tile.actor = self
+        self.game_scene.get_path_to_mouse()
 
     def get_damage_done(self, target):
         self.damage_done = (random.randint(self.damage[PlayerDamage.MIN],self.damage[PlayerDamage.MAX]) - target.flat_dr) * (1 - target.percent_dr)

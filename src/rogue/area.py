@@ -63,3 +63,4 @@ area_db = {
 area_db["test"].floor_tiles = forest_floor_tiles
 area_db["test"].terrain_tiles = forest_terrain_tiles
 area_db["test"].border_style = BorderStyle.TERRAIN
+
