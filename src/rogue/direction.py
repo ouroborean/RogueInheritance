@@ -33,6 +33,17 @@ pos_to_direction = {
     (-1, -1): Direction.NORTHWEST
 }
 
+direction_to_pos = {
+    Direction.NORTH: (0, -1) ,
+    Direction.SOUTH: (0, 1),
+    Direction.EAST: (1, 0),
+    Direction.WEST: (-1, 0),
+    Direction.SOUTHEAST: (1, 1),
+    Direction.SOUTHWEST: (-1, 1),
+    Direction.NORTHEAST: (1, -1),
+    Direction.NORTHWEST: (-1, -1)
+}
+
 def counter_direction(direction) -> Direction:
     return counters[direction]
 

@@ -49,12 +49,11 @@ class TileMap():
     def get_tile(self, coord: Tuple[int, int]) -> Tile:
         if self.valid_coord(coord):
             return self.tiles[coord[0] + (coord[1] * self.width)]
-    
+
     def get_shortest_path(self, start, end) -> list[Tile]:
         open_nodes = list()
         closed_nodes = set()
-        open_nodes.append(start)
-        
+        open_nodes.append(start)  
         ROOK_TILES = (Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST)
         BISHOP_TILES = (Direction.NORTHEAST, Direction.NORTHWEST, Direction.SOUTHEAST, Direction.SOUTHWEST)
         while True:
