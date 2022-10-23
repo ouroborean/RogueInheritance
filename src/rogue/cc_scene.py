@@ -159,7 +159,7 @@ class CCScene(Scene):
     def create_player(self):
         self.player.image = self.send_chosen_class().lower() + "player.png"
         self.player.character_class = self.send_chosen_class()
-        self.player.max_health = self.player_max_health + (3 * (self.player.statpool.stats[Stat.CONSTITUTION] - 10))
+        self.player.max_health = self.player.max_health + (3 * (self.player.statpool.stats[Stat.CONSTITUTION] - 10))
         self.player.current_health = self.player.max_health
         return self.player
 

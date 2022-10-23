@@ -6,6 +6,7 @@ from rogue.tile import Tile, TileEntity
 from rogue.tilemap import TileMap
 import random
 from rogue.direction import Direction, pos_to_direction
+from rogue.equipment import Equipment, Slot
 
 class NPCDamage(enum.IntEnum):
     MAX = 0
@@ -20,6 +21,7 @@ class NPC(Actor):
         self.statpool = rogue.statpool.StatPool()
         self.max_health = max_health
         self.current_health = 5
+        self.item_drop = Equipment()
         self.level = 1
         self.name = "Goblin"
         self.character_class = ""
@@ -29,6 +31,7 @@ class NPC(Actor):
         self.target_tile_loc = ()
         self.speed = 1.0
         self.accuracy = 50
+        self.turn_counter = 0
         self.flat_dr = 0
         self.percent_dr = 0
         self.defence = 10
@@ -50,12 +53,10 @@ class NPC(Actor):
     def npc_think(self, tile):
         player_adj = self.check_adjacent_tiles(tile)
         if player_adj == False:
-            print("Goblin is thinking about wandering...")
             self.npc_wander(tile)
 
     def get_random_direction(self):
         random_dir = random.choice([(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)])
-        print(random_dir)
         if not random_dir == (0,0):
             return random_dir
         else:
@@ -63,8 +64,12 @@ class NPC(Actor):
 
 
     def npc_wander(self, tile_start):
-        print("Goblin is checking a tile in the chosen direction!")
-        self.check_npc_bump(tile_start.neighbor[pos_to_direction[self.get_random_direction()]], tile_start)
+        chosen_tile = tile_start.neighbor[pos_to_direction[self.get_random_direction()]]
+        if chosen_tile.entity != TileEntity.TERRAIN:
+            self.check_npc_bump(chosen_tile, tile_start)
+        else:
+            self.npc_wander(tile_start)
+
         
 
     def check_npc_bump(self, tile_target, tile_start):
@@ -73,7 +78,6 @@ class NPC(Actor):
     def check_adjacent_tiles(self, tile):
         for adj_tile in tile.neighbor.values():
             if adj_tile.entity == TileEntity.PLAYER:
-                print("True")
                 self.check_npc_bump(adj_tile, tile)
                 return True
         return False
@@ -88,7 +92,6 @@ class NPC(Actor):
         return self.damage_done
 
     def combat_roll(self, target):
-        hit = False
         attack_roll = random.randint(1, self.accuracy)
         return attack_roll >= target.defence
 
@@ -98,19 +101,19 @@ class NPC(Actor):
     def do_npc_combat(self, target):
         if self.can_act:
             if self.combat_roll(target):
-                print("Attack hit!")
+                print("The goblin's attack hit!")
                 damage = self.get_damage_done(target)
-                print(f"Did {damage} damage!")
+                print(f"The goblin did {damage} damage!")
                 target.change_health(damage)
                 print(f"Gorbath has {target.current_health} health left!")
             else:
                 self.combat_miss()
+        self.is_new = True
 
     def npc_swap(self, tile_target, tile_start):
         pass
 
     def npc_stand(self, tile_target, tile_start):
-        print("Goblin hits a wall and stands there!")
         pass
 
     def npc_move(self, tile_target, tile_start):
