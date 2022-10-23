@@ -7,7 +7,7 @@ from rogue.tile import Tile, TileEntity
 from rogue.tilemap import TileMap
 import random
 from rogue.direction import direction_to_pos
-
+from rogue.equipment import Equipment, Slot
 import typing
 
 if typing.TYPE_CHECKING:
@@ -26,6 +26,8 @@ class Player(Actor):
 
     def __init__(self):
         self.statpool = rogue.statpool.StatPool()
+        # self.item_gain = Equipment()
+        self.inventory = []
         self.max_health = 200
         self.loc = (3, 2)
         self.current_health = 200
@@ -40,10 +42,12 @@ class Player(Actor):
         self.flat_dr = 0
         self.percent_dr = 0
         self.turn_counter = 0.0
-        self.speed = 1
+        self.speed = 1.0
         self.image = ""
         self.defence = 15
         self.game_scene = None
+        self.to_inventory = None
+        self.to_equip = None
         self.damage = {
             PlayerDamage.MAX : 5,
             PlayerDamage.MIN : 3
@@ -55,19 +59,24 @@ class Player(Actor):
             3 : self.player_move,
             4 : self.player_stand
         }
+        self.equipped = {
+            Slot.HEAD : None,
+            Slot.SHOULDERS : None,
+            Slot.CHEST : None,
+            Slot.HANDS : None,
+            Slot.LEGS : None,
+            Slot.FEET : None
+        }
 
     def check_player_bump(self, target):
         self.actions[target.entity](target)
-        self.turn_counter += self.speed
 
     def player_attack(self, target):
         print(f"Player attacking {target.actor.name}")
         self.do_player_combat(target.actor)
 
     def player_stand(self, tile):
-        print("Player wastes a turn doing nothing!")
-        self.turn_counter += self.speed     
-        print(self.turn_counter)
+        print("Player wastes a turn doing nothing!")    
         
     def set_game_scene(self, scene: "GameScene"):
         self.game_scene = scene
@@ -76,16 +85,23 @@ class Player(Actor):
         pass
 
     def player_move(self, tile):
-        
         diff = (tile.loc[0] - self.loc[0], tile.loc[1] - self.loc[1])
+        self.game_scene.tile_map.get_tile(self.loc).entity = TileEntity.EMPTY
+        self.game_scene.tile_map.get_tile(self.loc).actor = None
         self.loc = self + diff
         tile.entity = TileEntity.PLAYER
         tile.actor = self
-        self.game_scene.get_path_to_mouse()
+        if tile.item_drop:
+            self.inventory.append(tile.item_drop)
+        tile.item_drop = None
+        if self.game_scene.p_pressed:
+            self.game_scene.get_path_to_mouse()
+
 
     def get_damage_done(self, target):
         self.damage_done = (random.randint(self.damage[PlayerDamage.MIN],self.damage[PlayerDamage.MAX]) - target.flat_dr) * (1 - target.percent_dr)
         return self.damage_done
+        
 
     
 
@@ -100,9 +116,9 @@ class Player(Actor):
     def do_player_combat(self, target):
         if self.can_act:
             if self.combat_roll(target):
-                print("Attack hit!")
+                print("Gorbath's attack hit!")
                 damage = self.get_damage_done(target)
-                print(f"Did {damage} damage!")
+                print(f"Gorbath did {damage} damage!")
                 print(f"Goblin has {target.current_health} health left!")
                 target.change_health(damage)
             else:

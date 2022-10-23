@@ -3,6 +3,7 @@ from rogue.scenery import Scenery, SceneryType
 from typing import Tuple, Callable
 import enum
 import typing
+from rogue.equipment import Equipment
 
 if typing.TYPE_CHECKING:
     from rogue.actor import Actor
@@ -39,6 +40,7 @@ class Tile():
         self.actor_added = False
         self.g_cost = 0
         self.h_cost = 0
+        self.item_drop: Equipment()
         self.types = set()
         self.neighbor = {
             Direction.NORTH: None,
@@ -115,6 +117,7 @@ class FloorTile(Tile):
     def __init__(self, image, tile_types = set()):
         super().__init__()
         self.image = image
+        self.item_drop = None
         self.types = tile_types
         self.types.add(TileType.WALKABLE)
         for tile_type in tile_types:
