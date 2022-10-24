@@ -8,10 +8,12 @@ from rogue.tilemap import TileMap
 import random
 from rogue.direction import direction_to_pos
 from rogue.equipment import Equipment, Slot
+from rogue.scenery import Portal
 import typing
 
 if typing.TYPE_CHECKING:
     from rogue.game_scene import GameScene
+
 
 class PlayerDamage(enum.IntEnum):
     MAX = 0
@@ -96,6 +98,8 @@ class Player(Actor):
         tile.item_drop = None
         if self.game_scene.p_pressed:
             self.game_scene.get_path_to_mouse()
+        if self.check_for_portals(tile):
+            self.game_scene.change_area(tile.scenery)
 
 
     def get_damage_done(self, target):
@@ -103,7 +107,8 @@ class Player(Actor):
         return self.damage_done
         
 
-    
+    def check_for_portals(self, tile):
+        return tile.scenery and type(tile.scenery) == Portal and not tile.scenery.locked
 
     def combat_roll(self, target):
         hit = False
