@@ -40,6 +40,7 @@ class equip_slot(enum.IntEnum):
 def get_image_from_path(file_name: str) -> Image:
     with importlib.resources.path('rogue.resources', file_name) as path:
         return Image.open(path)
+from rogue.scenery import Portal
 
 FONTNAME = "Basic-Regular.ttf"
 
@@ -117,9 +118,8 @@ class GameScene(Scene):
         self.inventory_region = self.region.subregion(200, 200, 600, 300)
         self.hovered_tile = None
         self.grid_tile = self.app.load("grid.png")
-        
         self.area = area_db["test"]
-        self.tile_map = self.area.gen_tilemap((14, 9))
+        self.tile_map = self.area.gen_tilemap()
         self.dest = None
         self.path = list()     
 
@@ -380,6 +380,18 @@ class GameScene(Scene):
             self.path.clear()
             self.path.append(button.tile)
             self.full_render()
+
+        self.full_render()
+    
+    def change_area(self, portal):
+        self.path.clear()
+        self.area = area_db[portal.area_dest]
+        self.tile_map = self.area.gen_tilemap()
+        for exit_portal in self.tile_map.portals:
+            if exit_portal.id == portal.id:
+                self.player.loc = exit_portal.loc
+        self.full_render()
+
     
     def move_over_tile(self, button, sender):
         if self.hovered_tile != button.tile:
@@ -394,7 +406,7 @@ class GameScene(Scene):
         self.enemy_spawn_clicked = False
     
     def get_path_to_mouse(self):
-        if self.hovered_tile:  
+        if self.hovered_tile:
             self.path = self.tile_map.get_shortest_path(self.tile_map.get_tile(self.player.loc), self.hovered_tile)[1:]
     
     def press_left(self, event):
@@ -402,18 +414,24 @@ class GameScene(Scene):
         self.player.check_player_bump(self.tile_map.get_tile(twople))
         self.check_actors() 
         self.render_game_region()        
+        self.full_render()
+
 
     def press_up(self, event):
         twople = self.player + direction_to_pos[Direction.NORTH]
         self.player.check_player_bump(self.tile_map.get_tile(twople))
         self.check_actors()
-        self.render_game_region()        
+        self.render_game_region()
+        self.full_render()       
+    
 
     def press_down(self, event):
         twople = self.player + direction_to_pos[Direction.SOUTH]       
         self.player.check_player_bump(self.tile_map.get_tile(twople))
         self.check_actors()  
         self.render_game_region()           
+        self.full_render()     
+
     
     def press_space(self, event):
         if self.path:
@@ -458,11 +476,6 @@ class GameScene(Scene):
     
     def update_scene_state(self):
         pass
-        # for target in self.targets:
-        #     if self.player.turn_counter >= target.speed:
-        #         target.npc_think(self.send_tile(target))
-        #         self.targets.remove(target)
-        #         self.player.turn_counter -= target.speed  
-        #         self.render_game_region()
+
         
             

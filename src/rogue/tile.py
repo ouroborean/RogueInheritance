@@ -1,5 +1,5 @@
 from rogue.direction import Direction, counter_direction
-from rogue.scenery import Scenery, SceneryType
+from rogue.scenery import Scenery, SceneryType, Portal
 from typing import Tuple, Callable
 import enum
 import typing
@@ -8,6 +8,7 @@ from rogue.equipment import Equipment
 if typing.TYPE_CHECKING:
     from rogue.actor import Actor
     from rogue.game_object import GameObject
+    
     
 @enum.unique
 class TileType(enum.IntEnum):
@@ -92,8 +93,15 @@ class Tile():
     
     def apply_scenery(self, scenery):
         self.scenery = scenery
-        self.entity = TileEntity.TERRAIN
-        
+        if type(scenery) == Portal:
+            self.entity = TileEntity.EMPTY
+        else:
+            self.entity = TileEntity.TERRAIN
+    
+    def remove_scenery(self):
+        self.scenery = None
+        self.entity = TileEntity.EMPTY
+    
     def add_actor(self, actor):
         self.actor = actor
     
