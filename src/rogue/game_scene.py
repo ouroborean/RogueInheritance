@@ -202,14 +202,10 @@ class GameScene(Scene):
             self.player.inventory.insert(placeholder, self.to_inventory)
             print(f"Inventory: {self.player.inventory}")
             self.player.inventory.remove(self.player.inventory[placeholder + 1])
+            self.render_game_region()
         # self.player.inventory.insert(placeholder, self.to_inventory)
         # self.player.inventory.remove(self.player.inventory[placeholder + 1])
         # self.render_game_region()
-        
-        # print(self.to_equip)
-            
-        # self.player.inventory.remove(self.player.inventory.index(self.to_equip))
-            self.render_game_region()
 
     def inventory_item(self, button, event):
         print(button.item.name)
@@ -251,6 +247,7 @@ class GameScene(Scene):
                 tile_sprite.click += self.enemy_spawn
             else:
                 tile_sprite.click += functools.partial(self.player.check_player_bump, self.tile_select)
+            tile_sprite.click += self.move_over_tile
             self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
             if tile.scenery and tile.entity != TileEntity.ENEMY:
                 scenery_sprite = self.make_sprite(self.app.load(tile.scenery.image, width=64, height=64))
