@@ -11,13 +11,14 @@ FONTNAME = "Basic-Regular.ttf"
 def main():
     """Main game entry point."""
 
-    with App("Rogue Inheritance", (1200, 800)) as app:
+    with App("Rogue Inheritance", (1200, 800), (680, 320)) as app:
         app.assign_image_path("rogue.resources")
         app.assign_font(app.init_font(16, FONTNAME))
         scene = MenuScene(app, "main")
         app.add_scene(scene)
         app.add_scene(CCScene(app, "cc"))
         app.add_scene(GameScene(app, "game"))
+        print(app.window.position)
         app.start_game_loop(scene)
     
 main()

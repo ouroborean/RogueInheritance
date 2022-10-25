@@ -8,6 +8,8 @@ from shikkoku.color import *
 import sdl2.ext
 import rogue.statpool
 from rogue.statpool import Stat
+import sdl2.ext
+import sdl2.sdlttf
 from rogue.tile import FloorTile, Tile, TileType, TileEntity, VoidTile
 from rogue.tilemap import TileMap
 from rogue.cc_scene import CCScene
@@ -16,10 +18,12 @@ from rogue.equipment import Equipment, Slot
 from rogue.npc import NPC
 import importlib.resources
 from rogue.player import Player
-from rogue.direction import direction_to_pos, Direction
+import ctypes
+from rogue.direction import direction_to_pos, pos_to_direction, Direction
 from rogue.area import area_db
 import enum
 import functools
+from sdl2 import SDL_bool
 
 @enum.unique
 class Menu(enum.IntEnum):
@@ -46,25 +50,55 @@ FONTNAME = "Basic-Regular.ttf"
 
 class GameScene(Scene):
     
+    def __add__(self, other):
+        return (self.loc[0] + other[0], self.loc[1] + other[1])
+
 
     def __init__(self, app, name):
         super().__init__(app, name)
         self.enemy_count = 0
         self.to_equip = None
+        self.old_tile = (0, 0) 
+        self.previous_x = 38
+        self.cursor_x = 38
+        self.cursor_y = 38
+        self.direction_x = 0
+        self.x_distance = 0
+        self.y_distance = 0
+        self.loc = (0, 0)
+        self.previous_xy = (0, 0)
+        self.direction_xy = (0, 0)
+        self.previous_y = 38
+        self.direction_y = 0
+        self.target_radius = 1
+        self.b_pressed = False
         self.to_inventory = None
         self.enemy_spawn_clicked = False
         self.p_pressed = False
         self.item_count = 0
+        self.seen_tiles = { Tile }
+        self.the_wheel = {
+            0 : (0, -1),
+            1 : (-1, 0),
+            2 : (0, 1),
+            3 : (1, 0),
+            4 : (0, -1)
+        }
         self.targets = []
         self.event_handlers = {
             sdl2.SDL_KEYDOWN: self.handle_key_down_event,
-            sdl2.SDL_KEYUP: self.handle_key_up_event,
+            sdl2.SDL_KEYUP: self.handle_key_up_event
+            # sdl2.SDL_MOUSEMOTION: self.handle_mouse_movement
+            
         }
         
         self.key_down_event_handlers = {
             sdl2.SDLK_z: self.press_z,
             sdl2.SDLK_p: self.press_p,
+            sdl2.SDLK_b: self.press_b,
             sdl2.SDLK_w: self.press_up,
+            sdl2.SDLK_KP_PLUS: self.press_plus,
+            sdl2.SDLK_KP_MINUS: self.press_minus,
             sdl2.SDLK_a: self.press_left,
             sdl2.SDLK_s: self.press_down,            
             sdl2.SDLK_d: self.press_right,                        
@@ -110,13 +144,14 @@ class GameScene(Scene):
             Menu.EQUIP : self.toggle_equip_menu
         }
         self.slot_image = self.image_to_surf(self.app.load("grid.png"))
-
         self.title_font = self.app.init_font(24, FONTNAME)
         self.button_font = self.app.init_font(10, FONTNAME)
         self.game_region = self.region.subregion(5, 5, 913, 588)
         self.button_region = self.region.subregion(1000, 500, 150, 150)
+        self.mouse_cursor = self.make_button(self.image_to_surf(self.app.load("rogueplayer.png", width=50, height=50)))
         self.inventory_region = self.region.subregion(200, 200, 600, 300)
         self.hovered_tile = None
+        self.tile_select = None
         self.grid_tile = self.app.load("grid.png")
         self.area = area_db["test"]
         self.tile_map = self.area.gen_tilemap()
@@ -196,6 +231,8 @@ class GameScene(Scene):
         self.render_game_region()
         self.render_button_region()
 
+        
+
     def render_game_region(self):
         self.game_region.clear()
         background = self.make_panel(SILVER, self.game_region.size())
@@ -211,12 +248,10 @@ class GameScene(Scene):
             tile = self.tile_map.get_tile((column, row))
             tile_sprite = self.make_button(self.image_to_surf(self.app.load(tile.image, width=64, height=64)))
             tile_sprite.tile = tile
-            if self.p_pressed:
-                tile_sprite.motion += self.move_over_tile
-            else:
-                tile_sprite.motion += self.select_tile
             if self.enemy_spawn_clicked == True:
                 tile_sprite.click += self.enemy_spawn
+            else:
+                tile_sprite.click += functools.partial(self.player.check_player_bump, self.tile_select)
             self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
             if tile.scenery and tile.entity != TileEntity.PLAYER and tile.entity != TileEntity.ENEMY:
                 scenery_sprite = self.make_sprite(self.app.load(tile.scenery.image, width=64, height=64))
@@ -243,6 +278,9 @@ class GameScene(Scene):
             if tile in self.path:
                 path_panel = self.make_panel(PURPLE, (64, 64))
                 self.game_region.add_sprite(path_panel, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
+            elif tile in self.seen_tiles:
+                path_panel = self.make_panel(RED, (64, 64))
+                self.game_region.add_sprite(path_panel, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
             if tile.item_drop:
                 item_sprite = self.make_sprite(self.app.load(tile.item_drop.image, width=64, height=64))
                 self.game_region.add_sprite(item_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1]* 65)
@@ -255,7 +293,6 @@ class GameScene(Scene):
 
         if self.tile_map.get_tile(self.player.loc).scenery:
             self.tile_map.get_tile(self.player.loc).scenery = None
-        print(self.menu_state)
         self.render_open_menu[self.check_open_menu()]()
 
     def render_button_region(self):
@@ -297,10 +334,6 @@ class GameScene(Scene):
         self.inventory_region.clear()
         self.render_game_region()
 
-   # def my_func(self, button, sender, menu: MenuType = None):
-
-
-
     def check_for_menus(self, opening_menu : Menu, button, event):
         if self.menu_state[button.menu] == True:
             self.menu_toggle_switch[opening_menu]()
@@ -318,7 +351,6 @@ class GameScene(Scene):
         self.inventory_region.clear()            
         self.render_game_region()
 
-
     def render_skill_menu(self):
         print("Skill Menu Opened!")
         pass
@@ -333,7 +365,6 @@ class GameScene(Scene):
                 return menu         
         return Menu.NONE
 
-
     def get_created_character(self):
         self.player = self.app.scenes["cc"].create_player()
         self.player.set_game_scene(self)
@@ -341,18 +372,126 @@ class GameScene(Scene):
     def enemy_spawn_button_click(self, button, event):
         self.enemy_spawn_clicked = True
 
-    def press_z(self, event):
-        self.player.player_stand(self.tile_map.get_tile(self.player.loc))
-        self.check_actors()  
-        self.render_game_region()
-
     def check_actors(self):
         for target in self.targets:
             target.turn_counter += self.player.speed
             while target.turn_counter >= target.speed:
                 target.npc_think(self.send_tile(target))
                 target.turn_counter -= target.speed  
+
+    def send_tile(self, target):
+        target_loc = self.tile_map.get_tile((target.loc))
+        return target_loc
            
+    def change_area(self, portal):
+        self.path.clear()
+        self.area = area_db[portal.area_dest]
+        self.tile_map = self.area.gen_tilemap()
+        for exit_portal in self.tile_map.portals:
+            if exit_portal.id == portal.id:
+                self.player.loc = exit_portal.loc
+        self.full_render()
+
+    def enemy_spawn(self, button, sender):
+        self.tile_map.get_tile(button.tile.loc).entity = TileEntity.ENEMY
+        self.tile_map.get_tile(button.tile.loc).actor = NPC()
+        self.targets.append(self.tile_map.get_tile(button.tile.loc).actor)
+        self.enemy_spawn_clicked = False
+
+    def is_tile_seen(self, tile):
+        for tile in self.seen_tiles:
+            if self.tile_map.get_tile(self.loc) == tile:
+                return True
+        return False
+
+    def move(self, direction):
+        self.loc = self + direction
+        self.seen_tiles.add(self.tile_map.get_tile(self.loc))        
+
+
+    def spin_the_wheel(self, tile, radius):
+        if tile:
+            self.loc = (tile.loc)
+            for spin in range(len(self.the_wheel)-1):
+                for y in range(radius):
+                    self.loc = tile.loc
+                    for z in range(radius - y):
+                        self.move(self.the_wheel[spin]) 
+                    for a in range(y):
+                        self.move(self.the_wheel[spin + 1])
+
+    def press_minus(self, event):
+        if self.b_pressed:
+            if self.target_radius > 1:
+                self.target_radius -= 1
+
+    def press_plus(self, event):
+        if self.b_pressed:
+            self.target_radius += 1
+        
+    def press_b(self, event):
+        self.b_pressed = not self.b_pressed
+        # if self.b_pressed:
+        #     self.spin_the_wheel(self.tile_map.get_tile(self.player.loc), 4)
+        # else:
+        #     self.seen_tiles.clear()
+        self.render_game_region()
+                
+        
+
+#region Tile Selection Functions
+    def select_tile(self, button):
+        if self.hovered_tile != button:
+            self.hovered_tile = button
+            self.path.clear()
+            self.path.append(button)
+            self.full_render()
+
+    def move_over_tile(self, button):
+        if self.hovered_tile != button:
+            self.hovered_tile = button
+            self.get_path_to_mouse()
+            self.full_render()
+
+    def get_path_to_mouse(self):
+        if self.hovered_tile:
+            self.path = self.tile_map.get_shortest_path(self.tile_map.get_tile(self.player.loc), self.hovered_tile)[1:]
+#endregion
+    
+#region Keypress Functions
+
+
+
+
+
+    def press_right(self, event):
+        twople = self.player + direction_to_pos[Direction.EAST]
+        self.player.check_player_bump(self.tile_map.get_tile(twople))
+        self.tile_map.get_tile(self.player.loc).entity = TileEntity.PLAYER        
+        self.check_actors()
+        self.render_game_region()
+    
+    def press_left(self, event):
+        twople = self.player + direction_to_pos[Direction.WEST]      
+        self.player.check_player_bump(self.tile_map.get_tile(twople))
+        self.check_actors() 
+        self.render_game_region()        
+        self.full_render()
+
+    def press_up(self, event):
+        twople = self.player + direction_to_pos[Direction.NORTH]
+        self.player.check_player_bump(self.tile_map.get_tile(twople))
+        self.check_actors()
+        self.render_game_region()
+        self.full_render()       
+    
+    def press_down(self, event):
+        twople = self.player + direction_to_pos[Direction.SOUTH]       
+        self.player.check_player_bump(self.tile_map.get_tile(twople))
+        self.check_actors()  
+        self.render_game_region()           
+        self.full_render()   
+
     def press_p(self, event):
         print("P pressed!")
         self.p_pressed = not self.p_pressed
@@ -366,72 +505,12 @@ class GameScene(Scene):
                 self.path.append(self.hovered_tile)
         self.render_game_region()
 
-    def press_right(self, event):
-        twople = self.player + direction_to_pos[Direction.EAST]
-        self.player.check_player_bump(self.tile_map.get_tile(twople))
-        self.tile_map.get_tile(self.player.loc).entity = TileEntity.PLAYER        
-        self.check_actors()
-        self.render_game_region()
-
-    def select_tile(self, button, sender):
-
-        if self.hovered_tile != button.tile:
-            self.hovered_tile = button.tile
-            self.path.clear()
-            self.path.append(button.tile)
-            self.full_render()
-
-        self.full_render()
-    
-    def change_area(self, portal):
-        self.path.clear()
-        self.area = area_db[portal.area_dest]
-        self.tile_map = self.area.gen_tilemap()
-        for exit_portal in self.tile_map.portals:
-            if exit_portal.id == portal.id:
-                self.player.loc = exit_portal.loc
-        self.full_render()
-
-    
-    def move_over_tile(self, button, sender):
-        if self.hovered_tile != button.tile:
-            self.hovered_tile = button.tile
-            self.get_path_to_mouse()
-            self.full_render()
-
-    def enemy_spawn(self, button, sender):
-        self.tile_map.get_tile(button.tile.loc).entity = TileEntity.ENEMY
-        self.tile_map.get_tile(button.tile.loc).actor = NPC()
-        self.targets.append(self.tile_map.get_tile(button.tile.loc).actor)
-        self.enemy_spawn_clicked = False
-    
-    def get_path_to_mouse(self):
-        if self.hovered_tile:
-            self.path = self.tile_map.get_shortest_path(self.tile_map.get_tile(self.player.loc), self.hovered_tile)[1:]
-    
-    def press_left(self, event):
-        twople = self.player + direction_to_pos[Direction.WEST]      
-        self.player.check_player_bump(self.tile_map.get_tile(twople))
-        self.check_actors() 
-        self.render_game_region()        
-        self.full_render()
-
-
-    def press_up(self, event):
-        twople = self.player + direction_to_pos[Direction.NORTH]
-        self.player.check_player_bump(self.tile_map.get_tile(twople))
-        self.check_actors()
-        self.render_game_region()
-        self.full_render()       
-    
-
-    def press_down(self, event):
-        twople = self.player + direction_to_pos[Direction.SOUTH]       
-        self.player.check_player_bump(self.tile_map.get_tile(twople))
+    def press_z(self, event):
+        self.player.player_stand(self.tile_map.get_tile(self.player.loc))
         self.check_actors()  
-        self.render_game_region()           
-        self.full_render()     
+        self.render_game_region()
 
+#endregion
     
     def press_space(self, event):
         if self.path:
@@ -443,9 +522,9 @@ class GameScene(Scene):
             self.player.check_player_bump(self.tile_map.get_tile(twople))
             self.check_actors()            
             self.full_render()
-    
-    def release_right(self, event):
 
+ #region Arrow Keys Release Functions  
+    def release_right(self, event):
         pass
     
     def release_left(self, event):
@@ -456,7 +535,47 @@ class GameScene(Scene):
     
     def release_down(self, event):
         pass
+#endregion    
     
+    def handle_mouse_movement(self, button, event):
+        # self.cover_region.clear()
+        # self.cover_region.add_sprite(self.mouse_cursor, event.motion.x - 25, event.motion.y - 25)        
+        # self.previous_x = self.cursor_x
+        # self.previous_y = self.cursor_y
+        # self.x_distance = abs(self.previous_x - event.motion.x)
+        # self.y_distance = abs(self.previous_y - event.motion.y)  
+        # self.previous_x = event.motion.x
+        # self.previous_y = event.motion.y
+        # self.cursor_x += (event.motion.xrel * self.x_distance)
+        # self.cursor_y += (event.motion.yrel * self.y_distance)
+        # self.cover_region.add_sprite(mouse_cursor, self.app.mouse_x - 25, self.app.mouse_y - 25)
+        # if self.previous_x == event.motion.x:
+        #     self.direction_x = 0
+        # elif self.previous_x < event.motion.x:
+        #     self.direction_x = 1
+        # elif self.previous_x > event.motion.x:
+        #     self.direction_x = -1
+        # if self.previous_y == event.motion.y:
+        #     self.direction_y = 0
+        # elif self.previous_y < event.motion.y:
+        #     self.direction_y = 1
+        # elif self.previous_y > event.motion.y:
+        #     self.direction_y = -1
+        # self.previous_xy = (self.previous_x, self.previous_y)
+        # self.direction_xy = (self.direction_x, self.direction_y)
+        # self.x_distance = abs(self.previous_x - event.motion.x)
+        # self.y_distance = abs(self.previous_y - event.motion.y)
+        # self.previous_x = event.motion.x
+        # self.previous_y = event.motion.y
+        # self.cursor_x += self.direction_x  + (self.direction_x * self.x_distance) - self.direction_x
+        # self.cursor_y += self.direction_y + (self.direction_y * self.y_distance) - self.direction_y
+
+        # self.render_cover_region()
+        # print(self.direction_xy)
+        # print(f"x = {event.motion.x} | y = {event.motion.y} | xrel = {event.motion.xrel} | yrel = {event.motion.yrel}")
+        pass
+
+#region Event Handlers    
     def handle_event(self, event):
         if event.type in self.event_handlers:
             self.event_handlers[event.type](event)
@@ -468,14 +587,36 @@ class GameScene(Scene):
     def handle_key_up_event(self, event):
         if event.key.keysym.sym in self.key_up_event_handlers:
             self.key_up_event_handlers[event.key.keysym.sym](event)
-
-    def send_tile(self, target):
-        target_loc = self.tile_map.get_tile((target.loc))
-        return target_loc
-
+#endregion
     
     def update_scene_state(self):
-        pass
+        # self.cover_region.clear()
+        # self.cover_region.add_sprite(self.mouse_cursor, self.app.mouse_x - 25, self.app.mouse_y - 25)  
+        tile_x = (self.app.mouse_x - 7) // 65
+        tile_y = (self.app.mouse_y - 7) // 65
+        self.seen_tiles.clear()
+        if self.p_pressed:
+            self.tile_select = (self.tile_map.get_tile((tile_x, tile_y)))
+            self.move_over_tile(self.tile_map.get_tile((tile_x, tile_y)))
+        else:
+            self.tile_select = (self.tile_map.get_tile((tile_x, tile_y))) 
+            self.select_tile(self.tile_select) 
+
+        if self.b_pressed:
+            self.spin_the_wheel(self.hovered_tile, self.target_radius)
+        else:
+            self.seen_tiles.clear()
+        self.render_game_region() 
+        # self.previous_x = self.cursor_x
+        # self.previous_y = self.cursor_y
+        # self.x_distance = abs(self.previous_x - self.app.mouse_x)
+        # self.y_distance = abs(self.previous_y - self.app.mouse_y)  
+        # self.previous_x = self.app.mouse_x
+        # self.previous_y = self.app.mouse_y
+        # self.cursor_x += (self.app.mouse_xrel * self.x_distance)
+        # self.cursor_y += (self.app.mouse_yrel * self.y_distance)
+        # self.render_cover_region()
+
 
         
             

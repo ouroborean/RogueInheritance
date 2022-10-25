@@ -37,6 +37,9 @@ class Tile():
     h_cost: int
     path_parent: "Tile"
     
+    def __add__(self, other):
+        return (self.loc[0] + other[0], self.loc[1] + other[1])
+    
     def __init__(self):
         self.actor_added = False
         self.g_cost = 0
