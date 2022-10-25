@@ -157,7 +157,7 @@ class CCScene(Scene):
         self.app.change_scene("game")
 
     def create_player(self):
-        self.player.image = self.send_chosen_class().lower() + "player.png"
+        self.player.image = self.send_chosen_class() + "player.png"
         self.player.character_class = self.send_chosen_class()
         self.player.max_health = self.player.max_health + (3 * (self.player.statpool.stats[Stat.CONSTITUTION] - 10))
         self.player.current_health = self.player.max_health
@@ -222,13 +222,13 @@ class CCScene(Scene):
 
     def send_chosen_class(self):
         if self.w_selected == True:
-            return "Warrior"
+            return "warrior"
         elif self.m_selected == True:
-            return "Wizard"
+            return "wizard"
         elif self.r_selected == True:
-            return "Rogue"
+            return "rogue"
         elif self.c_selected == True:
-            return "Cleric"
+            return "cleric"
 
 
 

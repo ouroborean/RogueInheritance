@@ -19,6 +19,11 @@ class PlayerDamage(enum.IntEnum):
     MAX = 0
     MIN = 1
 
+class Stat(enum.IntEnum):
+    STRENGTH = 0
+    DEXTERITY = 1
+    CONSTITUION = 2
+    INTELLIGENCE = 3
 
 
 class Player(Actor):
@@ -70,8 +75,12 @@ class Player(Actor):
             Slot.FEET : None
         }
 
-    def check_player_bump(self, target):
+    def check_player_bump(self, target, button = None, sender = None):
         self.actions[target.entity](target)
+        self.game_scene.seen_tiles.clear()
+        self.game_scene.b_pressed = False
+        self.game_scene.render_game_region()
+
 
     def player_attack(self, target):
         print(f"Player attacking {target.actor.name}")
@@ -93,6 +102,7 @@ class Player(Actor):
         self.loc = self + diff
         tile.entity = TileEntity.PLAYER
         tile.actor = self
+        print(f"Entering {tile.loc}!")
         if tile.item_drop:
             self.inventory.append(tile.item_drop)
         tile.item_drop = None
