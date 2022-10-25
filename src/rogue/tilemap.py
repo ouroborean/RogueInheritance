@@ -149,6 +149,7 @@ class TileMap():
                 dest.remove_scenery()
                 dest.apply_scenery(portal)
                 portal.lock_location(dest.loc)
+                print("Portal added!")
                 self.portals.append(portal)
                 
                 

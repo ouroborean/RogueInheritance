@@ -2,6 +2,7 @@ from random import random
 from rogue.actor import Actor
 from rogue.statpool import Stat
 import rogue.statpool
+from rogue.playerclass import PlayerClass
 import enum
 from rogue.tile import Tile, TileEntity
 from rogue.tilemap import TileMap
@@ -40,7 +41,6 @@ class Player(Actor):
         self.current_health = 200
         self.level = 1
         self.name = "Gorbath the Simple"
-        self.character_class = ""
         self.can_act = True
         self.tile = ()
         self.can_move = True
@@ -55,6 +55,8 @@ class Player(Actor):
         self.game_scene = None
         self.to_inventory = None
         self.to_equip = None
+        self.stat_points = 5
+        self.player_class = PlayerClass.NONE
         self.damage = {
             PlayerDamage.MAX : 5,
             PlayerDamage.MIN : 3

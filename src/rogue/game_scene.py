@@ -163,7 +163,7 @@ class GameScene(Scene):
         background = self.make_panel(WHITE, self.inventory_region.size())
         self.inventory_region.add_sprite(background, 0, 0)
         for i in self.equip_slot_location.values():
-            slot = self.make_button(self.image_to_surf(self.app.load("grid.png")))
+            slot = self.make_button(self.app.load("grid.png"))
             self.inventory_region.add_sprite(slot, i[0], i[1])
         for slot, gear in self.player.equipped.items():
             if gear:
@@ -177,7 +177,7 @@ class GameScene(Scene):
         for i in range(16):
             row = i // 4
             column = i % 4
-            inventory_slot = self.make_button(self.image_to_surf(self.app.load("grid.png")))
+            inventory_slot = self.make_button(self.app.load("grid.png"))
         #    inventory_slot.click += self.inventory_item
             inventory_slot.click += self.equip_item
             inventory_slot.item = None
@@ -202,7 +202,6 @@ class GameScene(Scene):
             self.player.inventory.insert(placeholder, self.to_inventory)
             print(f"Inventory: {self.player.inventory}")
             self.player.inventory.remove(self.player.inventory[placeholder + 1])
-            print(self.player.inventory)
         # self.player.inventory.insert(placeholder, self.to_inventory)
         # self.player.inventory.remove(self.player.inventory[placeholder + 1])
         # self.render_game_region()
@@ -246,14 +245,14 @@ class GameScene(Scene):
             grid = self.make_sprite(self.grid_tile)
             self.game_region.add_sprite(grid, 1 + column * 65, 1 + row * 65)
             tile = self.tile_map.get_tile((column, row))
-            tile_sprite = self.make_button(self.image_to_surf(self.app.load(tile.image, width=64, height=64)))
+            tile_sprite = self.make_button(self.app.load(tile.image, width=64, height=64))
             tile_sprite.tile = tile
             if self.enemy_spawn_clicked == True:
                 tile_sprite.click += self.enemy_spawn
             else:
                 tile_sprite.click += functools.partial(self.player.check_player_bump, self.tile_select)
             self.game_region.add_sprite(tile_sprite, 2 + column * 65, 2 + row * 65)
-            if tile.scenery and tile.entity != TileEntity.PLAYER and tile.entity != TileEntity.ENEMY:
+            if tile.scenery and tile.entity != TileEntity.ENEMY:
                 scenery_sprite = self.make_sprite(self.app.load(tile.scenery.image, width=64, height=64))
                 self.game_region.add_sprite(scenery_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
             if tile.actor:
@@ -261,9 +260,6 @@ class GameScene(Scene):
                     print(tile.actor.name + " died on " + str(tile.actor.loc))
                     tile.actor.item_drop.form_new_equipment()
                     tile.item_drop = tile.actor.item_drop
-                    print(tile.item_drop.name)
-                    print(tile.item_drop.stat_changes)
-                    print(tile.item_drop.image)
                     item_sprite = self.make_sprite(self.app.load(tile.item_drop.image, width=64, height=64))
                     self.game_region.add_sprite(item_sprite, 2 + tile.loc[0] * 65, 2 + tile.loc[1]* 65)
                     if tile.actor in self.targets:
@@ -276,7 +272,7 @@ class GameScene(Scene):
                     tile.actor.loc = tile.loc
                     tile.entity = TileEntity.ENEMY
             if tile in self.path:
-                path_panel = self.make_panel(PURPLE, (64, 64))
+                path_panel = self.make_panel(DARK_GREEN, (64, 64))
                 self.game_region.add_sprite(path_panel, 2 + tile.loc[0] * 65, 2 + tile.loc[1] * 65)
             elif tile in self.seen_tiles:
                 path_panel = self.make_panel(RED, (64, 64))
@@ -291,8 +287,6 @@ class GameScene(Scene):
         character_sprite = self.make_sprite(self.app.load(self.player.image, width=64, height=64))
         self.game_region.add_sprite(character_sprite, 2 + self.player.loc[0] * 65, 2 + self.player.loc[1] * 65)
 
-        if self.tile_map.get_tile(self.player.loc).scenery:
-            self.tile_map.get_tile(self.player.loc).scenery = None
         self.render_open_menu[self.check_open_menu()]()
 
     def render_button_region(self):
@@ -365,8 +359,8 @@ class GameScene(Scene):
                 return menu         
         return Menu.NONE
 
-    def get_created_character(self):
-        self.player = self.app.scenes["cc"].create_player()
+    def get_created_character(self, player):
+        self.player = player
         self.player.set_game_scene(self)
 
     def enemy_spawn_button_click(self, button, event):
@@ -590,8 +584,6 @@ class GameScene(Scene):
 #endregion
     
     def update_scene_state(self):
-        # self.cover_region.clear()
-        # self.cover_region.add_sprite(self.mouse_cursor, self.app.mouse_x - 25, self.app.mouse_y - 25)  
         tile_x = (self.app.mouse_x - 7) // 65
         tile_y = (self.app.mouse_y - 7) // 65
         self.seen_tiles.clear()
@@ -606,16 +598,7 @@ class GameScene(Scene):
             self.spin_the_wheel(self.hovered_tile, self.target_radius)
         else:
             self.seen_tiles.clear()
-        self.render_game_region() 
-        # self.previous_x = self.cursor_x
-        # self.previous_y = self.cursor_y
-        # self.x_distance = abs(self.previous_x - self.app.mouse_x)
-        # self.y_distance = abs(self.previous_y - self.app.mouse_y)  
-        # self.previous_x = self.app.mouse_x
-        # self.previous_y = self.app.mouse_y
-        # self.cursor_x += (self.app.mouse_xrel * self.x_distance)
-        # self.cursor_y += (self.app.mouse_yrel * self.y_distance)
-        # self.render_cover_region()
+        self.render_game_region()
 
 
         
